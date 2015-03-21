@@ -20,6 +20,8 @@ var REDIS_CONNECTION_OPTIONS = {
   port: 6379
 };
 
+var REDIS_URL = 'tcp://localhost:6379';
+
 var redisClient = redis.createClient(REDIS_CONNECTION_OPTIONS);
 var revisionsList = [];
 var mockShaTaggingAdapter = new CoreObject({
@@ -83,194 +85,200 @@ var resetUI = function(adapter) {
 };
 
 describe('RedisAdapter', function() {
-  beforeEach(function() {
-    redisAdapter = new RedisAdapter({
-      config: REDIS_CONNECTION_OPTIONS,
-      manifest: MANIFEST,
-      manifestSize: MANIFEST_SIZE,
-      taggingAdapter: mockShaTaggingAdapter,
-      ui: new MockUI()
-    });
+  [REDIS_CONNECTION_OPTIONS, REDIS_URL].forEach(function(configOption) {
+    var typeOfPassedConfig = typeof(configOption);
 
-    upload = uploadWithRevisionKey();
-  });
-
-  afterEach(function(done) {
-    mockShaTaggingAdapter.reset();
-    revisionsList = [];
-    cleanUpRedis(done);
-  });
-
-  describe('#upload', function() {
-    it('stores passed value in redis', function() {
-      return upload
-        .then(function() {
-          return redisClient.get(UPLOAD_KEY);
-        })
-        .then(function(result) {
-          return expect(result).to.eq(DOCUMENT_TO_SAVE);
-        });
-    });
-
-    it('resolves with the document key on successful upload', function() {
-      return expect(upload).to.become(UPLOAD_KEY);
-    });
-
-    it('prints a success message when upload succeeds', function() {
-      return upload
-        .then(function() {
-          var output = redisAdapter.ui.output;
-          return expect(output).to.contain('Upload successful');
-        });
-    });
-
-    it('updates a list of recent uploads when upload resolves', function() {
-      return upload
-        .then(function() {
-          return redisClient.lrange(MANIFEST, 0, MANIFEST_SIZE);
-        })
-        .then(function(values) {
-          return expect(values.length).to.be.greaterThan(0);
-        });
-    });
-
-    it('only keeps <manifestSize> uploads in list after upload', function() {
-      return upload
-        .then(fillUpManifest.bind(null, MANIFEST_SIZE))
-        .then(function() {
-          return redisClient.lrange(MANIFEST, 0, 20);
-        })
-        .then(function(values) {
-          return expect(values.length).to.eq(MANIFEST_SIZE);
-        });
-    });
-
-    describe('upload failure', function() {
-      var second;
-
+    context('configOption: ' + typeOfPassedConfig, function() {
       beforeEach(function() {
-        second = upload
-          .then(function() {
-            mockShaTaggingAdapter.reset();
-
-            return redisAdapter.upload(DOCUMENT_TO_SAVE);
-          });
-      });
-
-      it('rejects when passed key is already in manifest', function() {
-        return expect(second).to.be.rejected;
-      });
-
-      it('rejects with a SilentError ember-cli can handle', function() {
-        var errorMessage = /Upload\ failed!/;
-        return expect(second).to.be.rejectedWith(SilentError, errorMessage);
-      });
-    });
-  });
-
-  describe('list/activate', function() {
-    var uploadsDone;
-
-    beforeEach(function() {
-      uploadsDone = upload
-        .then(fillUpManifest.bind(null, MANIFEST_SIZE - 1, revisionsList));
-    });
-
-    describe('#list', function() {
-      it('lists all uploads stored in manifest', function() {
-        return uploadsDone
-          .then(function() {
-            resetUI(redisAdapter);
-            return redisAdapter.list();
-          })
-          .then(function() {
-            var uploads = redisAdapter.ui.output;
-            return revisionsList.forEach(function(upload) {
-              expect(uploads).to.contain(upload);
-            });
-          });
-      });
-
-      it('prints out a formatted list of uploaded revisions', function() {
-        return uploadsDone
-          .then(function() {
-            resetUI(redisAdapter);
-
-            return redisAdapter.list();
-          })
-          .then(function() {
-            var list = 'uploaded revisions';
-            return expect(redisAdapter.ui.output).to.contain(list);
-          });
-      });
-    });
-
-    describe('#activate', function() {
-      var activation;
-
-      describe('successfull activation', function() {
-        var revisionToActivate;
-
-        beforeEach(function() {
-          activation = uploadsDone
-            .then(function() {
-              resetUI(redisAdapter);
-              revisionToActivate = revisionsList[0];
-              return redisAdapter.activate(revisionToActivate);
-            });
+        redisAdapter = new RedisAdapter({
+          config: configOption,
+          manifest: MANIFEST,
+          manifestSize: MANIFEST_SIZE,
+          taggingAdapter: mockShaTaggingAdapter,
+          ui: new MockUI()
         });
 
-        it('sets <manifest>:current when key is in manifest', function() {
-          return activation
+        upload = uploadWithRevisionKey();
+      });
+
+      afterEach(function(done) {
+        mockShaTaggingAdapter.reset();
+        revisionsList = [];
+        cleanUpRedis(done);
+      });
+
+      describe('#upload', function() {
+        it('stores passed value in redis', function() {
+          return upload
             .then(function() {
-              return redisClient.get(MANIFEST+':current');
+              return redisClient.get(UPLOAD_KEY);
             })
             .then(function(result) {
-              return expect(result).to.eq(revisionToActivate);
+              return expect(result).to.eq(DOCUMENT_TO_SAVE);
             });
         });
 
-        it('prints a success message when activation succeeds', function() {
-          return activation
+        it('resolves with the document key on successful upload', function() {
+          return expect(upload).to.become(UPLOAD_KEY);
+        });
+
+        it('prints a success message when upload succeeds', function() {
+          return upload
             .then(function() {
-              var successMessage = 'Activation successful!';
-              return expect(redisAdapter.ui.output).to.contain(successMessage);
+              var output = redisAdapter.ui.output;
+              return expect(output).to.contain('Upload successful');
             });
+        });
+
+        it('updates a list of recent uploads when upload resolves', function() {
+          return upload
+            .then(function() {
+              return redisClient.lrange(MANIFEST, 0, MANIFEST_SIZE);
+            })
+            .then(function(values) {
+              return expect(values.length).to.be.greaterThan(0);
+            });
+        });
+
+        it('only keeps <manifestSize> uploads in list after upload', function() {
+          return upload
+            .then(fillUpManifest.bind(null, MANIFEST_SIZE))
+            .then(function() {
+              return redisClient.lrange(MANIFEST, 0, 20);
+            })
+            .then(function(values) {
+              return expect(values.length).to.eq(MANIFEST_SIZE);
+            });
+        });
+
+        describe('upload failure', function() {
+          var second;
+
+          beforeEach(function() {
+            second = upload
+              .then(function() {
+                mockShaTaggingAdapter.reset();
+
+                return redisAdapter.upload(DOCUMENT_TO_SAVE);
+              });
+          });
+
+          it('rejects when passed key is already in manifest', function() {
+            return expect(second).to.be.rejected;
+          });
+
+          it('rejects with a SilentError ember-cli can handle', function() {
+            var errorMessage = /Upload\ failed!/;
+            return expect(second).to.be.rejectedWith(SilentError, errorMessage);
+          });
         });
       });
 
-      it('rejects when no revision is passed', function() {
-        activation = uploadsDone
-          .then(function() {
-            return redisAdapter.activate();
+      describe('list/activate', function() {
+        var uploadsDone;
+
+        beforeEach(function() {
+          uploadsDone = upload
+            .then(fillUpManifest.bind(null, MANIFEST_SIZE - 1, revisionsList));
+        });
+
+        describe('#list', function() {
+          it('lists all uploads stored in manifest', function() {
+            return uploadsDone
+              .then(function() {
+                resetUI(redisAdapter);
+                return redisAdapter.list();
+              })
+              .then(function() {
+                var uploads = redisAdapter.ui.output;
+                return revisionsList.forEach(function(upload) {
+                  expect(uploads).to.contain(upload);
+                });
+              });
           });
 
-        return expect(activation).to.be.rejectedWith(SilentError, /Error!/);
-      });
+          it('prints out a formatted list of uploaded revisions', function() {
+            return uploadsDone
+              .then(function() {
+                resetUI(redisAdapter);
 
-      it('rejects with SilentError when key is not in manifest', function() {
-        activation = uploadsDone
-          .then(function() {
-            return redisAdapter.activate('not-in-manifest');
+                return redisAdapter.list();
+              })
+              .then(function() {
+                var list = 'uploaded revisions';
+                return expect(redisAdapter.ui.output).to.contain(list);
+              });
+          });
+        });
+
+        describe('#activate', function() {
+          var activation;
+
+          describe('successfull activation', function() {
+            var revisionToActivate;
+
+            beforeEach(function() {
+              activation = uploadsDone
+                .then(function() {
+                  resetUI(redisAdapter);
+                  revisionToActivate = revisionsList[0];
+                  return redisAdapter.activate(revisionToActivate);
+                });
+            });
+
+            it('sets <manifest>:current when key is in manifest', function() {
+              return activation
+                .then(function() {
+                  return redisClient.get(MANIFEST+':current');
+                })
+                .then(function(result) {
+                  return expect(result).to.eq(revisionToActivate);
+                });
+            });
+
+            it('prints a success message when activation succeeds', function() {
+              return activation
+                .then(function() {
+                  var successMessage = 'Activation successful!';
+                  return expect(redisAdapter.ui.output).to.contain(successMessage);
+                });
+            });
           });
 
-        return expect(activation).to.be.rejectedWith(SilentError, /Error!/);
-      });
-    });
+          it('rejects when no revision is passed', function() {
+            activation = uploadsDone
+              .then(function() {
+                return redisAdapter.activate();
+              });
 
-    describe('#_current', function() {
-      it('returns revision that set <manifest>:current', function() {
-        return uploadsDone
-          .then(function() {
-            revisionToActivate = revisionsList[0];
-            return redisAdapter.activate(revisionToActivate);
-          })
-          .then(function() {
-            return redisAdapter._current();
-          })
-          .then(function(result) {
-            return expect(result).to.eq(revisionToActivate);
+            return expect(activation).to.be.rejectedWith(SilentError, /Error!/);
           });
+
+          it('rejects with SilentError when key is not in manifest', function() {
+            activation = uploadsDone
+              .then(function() {
+                return redisAdapter.activate('not-in-manifest');
+              });
+
+            return expect(activation).to.be.rejectedWith(SilentError, /Error!/);
+          });
+        });
+
+        describe('#_current', function() {
+          it('returns revision that set <manifest>:current', function() {
+            return uploadsDone
+              .then(function() {
+                revisionToActivate = revisionsList[0];
+                return redisAdapter.activate(revisionToActivate);
+              })
+              .then(function() {
+                return redisAdapter._current();
+              })
+              .then(function(result) {
+                return expect(result).to.eq(revisionToActivate);
+              });
+          });
+        });
       });
     });
   });

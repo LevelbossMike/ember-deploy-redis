@@ -46,6 +46,7 @@
     "core-object": "0.0.2",
     "redis": "^0.12.1",
     "rsvp": "^3.0.16",
-    "then-redis": "^1.2.2"
+    "then-redis": "^1.2.2",
+    "tunnel-ssh": "^1.0.1"
   }
 }

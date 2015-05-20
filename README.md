@@ -17,9 +17,11 @@ module.exports = {
       port: 6379,
       ssh: {
         username: 'deploy',
-        privateKey: '<my-private-key>'
+        privateKey: '~/.ssh/id_rsa'
       }
     }
   }
 };
 ```
+
+Note that the `privateKey` is a path to the SSH private key to access the machine that your redis instance is on, not a full blown key.

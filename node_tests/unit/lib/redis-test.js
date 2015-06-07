@@ -262,6 +262,23 @@ describe('RedisAdapter', function() {
 
             return expect(activation).to.be.rejectedWith(SilentError, /Error!/);
           });
+
+          it('does not set the current revision when key is not in manifest', function() {
+            activation = uploadsDone
+              .then(function() {
+                return redisAdapter.activate(revisionsList[0]);
+              })
+              .then(function() {
+                return redisAdapter.activate('does-not-exist');
+              });
+              return expect(activation).to.be.rejected
+                .then(function() {
+                  return redisAdapter._current();
+                })
+                .then(function(currentRevision) {
+                  return expect(currentRevision).to.eql(revisionsList[0]);
+                });
+          });
         });
 
         describe('#_current', function() {

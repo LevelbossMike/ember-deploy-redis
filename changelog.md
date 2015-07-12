@@ -1,3 +1,14 @@
+### 0.0.7
+
+This release fixes problems with the `silent-error` package used internally in
+this addon.
+
+Thanks to [@jherdman](https://github.com/jherdman) for this contribution!
+
+#### Community Contributions
+
+- [#17](https://github.com/levelbossmike/ember-deploy-redis/pull/17) Use silent-error Package [@jherdman](https://github.com/jherdman)
+
 ### 0.0.6
 
 This release adds an improvement for ssh-tunneling. see [#15](https://github.com/levelbossmike/ember-deploy-redis/pull/15) for details.

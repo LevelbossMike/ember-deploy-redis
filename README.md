@@ -44,3 +44,25 @@ module.exports = {
 };
 ```
 Note that the `privateKey` is a path to the SSH private key to access the machine that your redis instance is on, not a full blown key.
+
+### Deploying with a redis URL (for hosted redis, like Heroku)
+
+If you're using a hosted solution Heroku Redis, RedisToGo, etc., you can add the URL directly as a string for the `store` option.
+
+
+```javascript
+module.exports = {
+  development: {
+    store: "redis://:password@hostname:port"
+  }
+}
+```
+
+#### TIP
+Redis doesn't have a concept of usernames. If your redis URL contains a username it is simply a placeholder. Remove the username, leaving the colon separator like this:
+
+`redis://username:password@hostname:port`
+
+becomes
+
+`redis://:password@hostname:port`

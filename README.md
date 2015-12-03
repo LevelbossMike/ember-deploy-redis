@@ -1,5 +1,11 @@
 # Ember-deploy-redis [![Build Status](https://travis-ci.org/LevelbossMike/ember-deploy-redis.svg?branch=master)](https://travis-ci.org/LevelbossMike/ember-deploy-redis)
 
+![](https://ember-cli-deploy.github.io/ember-cli-deploy-version-badges/plugins/ember-deploy-github.svg)
+
+<hr/>
+**WARNING: This plugin is only compatible with ember-cli-deploy versions < 0.5.0 and deprecated in favor of [ember-cli-deploy-redis](https://github.com/ember-cli-deploy/ember-cli-deploy-redis). Please consider upgrading to an up to date version of [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy) when using in production**
+<hr/>
+
 This is the redis-adapter implementation to use [Redis](http://redis.io) with
 [ember-deploy](https://github.com/levelbossmike/ember-deploy).
 
